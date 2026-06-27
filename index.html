@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>CulturBari360 - Cultura, Arte, Territorio</title>
+<meta name="description" content="Luoghi storici e mostre d'arte di Bari, con mappa interattiva e indicazioni stradali.">
+<meta name="theme-color" content="#140508">
+<link rel="icon" type="image/x-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="root">
+<div id="desktop-sidebar">
+    <div class="sidebar-brand">
+      <img class="sidebar-logo-img" src="logo.png" alt="CulturBari360">
+      <p class="logo-sub">Cultura · Arte · Territorio</p>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="snav-btn active" data-tab="mappa" onclick="goTab('mappa')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-7.2-7-12a7 7 0 1 1 14 0c0 4.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.4"/></svg>
+        <span>Mappa</span>
+      </button>
+      <button class="snav-btn" data-tab="luoghi" onclick="goTab('luoghi')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21h18"/><path d="M5 21V10M9 21V10M15 21V10M19 21V10"/><path d="M3 10l9-6 9 6"/></svg>
+        <span>Luoghi storici</span>
+      </button>
+      <button class="snav-btn" data-tab="mostre" onclick="goTab('mostre')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5.5-5.5L7 19"/></svg>
+        <span>Mostre</span>
+      </button>
+      <button class="snav-btn" data-tab="info" onclick="goTab('info')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.6" r="0.5" fill="currentColor"/></svg>
+        <span>Info</span>
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+<div class="lang-switcher" id="sidebarLangSwitcher">
+        <button class="lang-trigger" id="sidebarLangTrigger" aria-haspopup="true" aria-expanded="false">
+          <span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ee-1f1f9.svg" alt="IT"></span>
+          <span class="lang-name">Italiano</span>
+          <svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="lang-dropdown" id="sidebarLangDropdown" role="menu">
+          <button class="lang-option active" data-lang="it" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ee-1f1f9.svg" alt="IT"></span> <span>Italiano</span></button>
+          <button class="lang-option" data-lang="en" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ec-1f1e7.svg" alt="GB"></span> <span>English</span></button>
+          <button class="lang-option" data-lang="fr" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1eb-1f1f7.svg" alt="FR"></span> <span>Français</span></button>
+          <button class="lang-option" data-lang="de" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1e9-1f1ea.svg" alt="DE"></span> <span>Deutsch</span></button>
+          <button class="lang-option" data-lang="es" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ea-1f1f8.svg" alt="ES"></span> <span>Español</span></button>
+        </div>
+      </div>
+      <button class="sidebar-legale-btn" onclick="openSettings()" id="sidebarSettingsBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="13" height="13"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span id="sidebarSettingsLabel">Impostazioni</span>
+      </button>
+      <div class="foot-copy">© CulturBari360</div>
+    </div>
+  </div>
+<div id="app">
+
+    <header class="topbar">
+      <button class="topbar-legale-btn" onclick="openSettings()" id="topbarSettingsBtn" aria-label="Impostazioni">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span id="topbarSettingsLabel" class="topbar-settings-label">Impostazioni</span>
+      </button>
+      <div class="brand">
+        <img class="topbar-logo" src="logo.png" alt="CulturBari360">
+      </div>
+<div class="lang-switcher topbar-lang" id="topbarLangSwitcher">
+        <button class="lang-trigger" id="topbarLangTrigger" aria-haspopup="true" aria-expanded="false">
+          <span class="lang-flag" style="font-size:20px;line-height:1;"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ee-1f1f9.svg" alt="IT"></span>
+          <span class="lang-name" style="display:none;">IT</span>
+          <svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="lang-dropdown" id="topbarLangDropdown" role="menu">
+          <button class="lang-option active" data-lang="it" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ee-1f1f9.svg" alt="IT"></span> <span>Italiano</span></button>
+          <button class="lang-option" data-lang="en" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ec-1f1e7.svg" alt="GB"></span> <span>English</span></button>
+          <button class="lang-option" data-lang="fr" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1eb-1f1f7.svg" alt="FR"></span> <span>Français</span></button>
+          <button class="lang-option" data-lang="de" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1e9-1f1ea.svg" alt="DE"></span> <span>Deutsch</span></button>
+          <button class="lang-option" data-lang="es" role="menuitem"><span class="lang-flag"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ea-1f1f8.svg" alt="ES"></span> <span>Español</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="views">
+
+      <section id="view-mappa" class="view active">
+        <div id="mapview">
+          <div id="map"></div>
+          <div class="filtri">
+            <button class="chip active" data-cat="storico" onclick="toggleFiltro('storico')">
+              <span class="chip-dot storico"></span><span class="chip-text">Luoghi storici</span>
+            </button>
+            <button class="chip active" data-cat="arte" onclick="toggleFiltro('arte')">
+              <span class="chip-dot arte"></span><span class="chip-text">Mostre</span>
+            </button>
+          </div>
+          <div class="map-sheet" id="mapSheet">
+            <div class="handle-wrap" id="sheetHandle"><div class="handle"></div></div>
+            <div class="sheet-scroll-wrap" id="sheetScrollWrap">
+            <div class="sheet-scroll" id="sheetList"></div>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-luoghi" class="view">
+        <div class="view-header">
+          <span class="overline" id="luoghi-overline">Itinerario</span>
+          <h2 id="luoghi-title">Luoghi storici</h2>
+          <p class="subtitle" id="luoghi-subtitle">Le tappe principali di Bari millenaria.</p>
+        </div>
+        <div class="card-list" id="listaLuoghi"></div>
+      </section>
+
+      <section id="view-mostre" class="view">
+        <div class="view-header">
+          <span class="overline" id="mostre-overline">Arte oggi</span>
+          <h2 id="mostre-title">Mostre in città</h2>
+          <p class="subtitle" id="mostre-subtitle">Esposizioni in corso a Bari, aggiornate manualmente.</p>
+        </div>
+        <div class="card-list" id="listaMostre"></div>
+      </section>
+
+      <section id="view-info" class="view">
+        <div class="view-header">
+          <span class="overline" id="info-overline">A proposito</span>
+          <h2 id="info-title">Cos'è CulturBari360?</h2>
+          <p class="subtitle" id="info-subtitle">La guida tascabile alla cultura e all'arte di Bari.</p>
+        </div>
+        <div class="info-page">
+          <p id="info-p1">CulturBari360 è una guida tascabile alla Bari che vale la pena scoprire: i vicoli della città vecchia, le chiese romaniche, i teatri e le mostre d'arte del momento, tutto in un unico posto.</p>
+          <p id="info-p2">Per ogni luogo trovi una descrizione, l'indirizzo esatto e le indicazioni stradali via Google Maps — così puoi passare dal telefono alla strada in un tocco solo.</p>
+          <p id="info-p3">Le mostre sono curate e aggiornate a mano, per garantire che quello che vedi sia davvero in corso. Niente di automatico, niente di superfluo.</p>
+          <div class="credits-block">
+            <span class="credits-label" id="info-dev">Sviluppato da</span>
+            <span class="credits-name">Ermes Strippoli</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-legale" class="view">
+        <div class="view-header">
+          <span class="overline" id="legale-overline">Trasparenza</span>
+          <h2 id="legale-title">Informazioni legali</h2>
+          <p class="subtitle" id="legale-subtitle">Privacy, cookie e termini d'uso di CulturBari360.</p>
+        </div>
+        <div class="legal-page">
+          <div class="legal-tabs">
+            <button class="legal-tab-btn active" data-legal="privacy" id="legale-tab-privacy" onclick="switchLegalTab('privacy')">Privacy Policy</button>
+            <button class="legal-tab-btn" data-legal="cookie" id="legale-tab-cookie" onclick="switchLegalTab('cookie')">Cookie Policy</button>
+            <button class="legal-tab-btn" data-legal="termini" id="legale-tab-termini" onclick="switchLegalTab('termini')">Termini d'uso</button>
+          </div>
+          <div class="legal-content" id="legalContent"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab-btn active" data-tab="mappa" onclick="goTab('mappa')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-7.2-7-12a7 7 0 1 1 14 0c0 4.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.4"/></svg>
+        <span>Mappa</span>
+      </button>
+      <button class="tab-btn" data-tab="luoghi" onclick="goTab('luoghi')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18"/><path d="M5 21V10M9 21V10M15 21V10M19 21V10"/><path d="M3 10l9-6 9 6"/></svg>
+        <span>Luoghi</span>
+      </button>
+      <button class="tab-btn" data-tab="mostre" onclick="goTab('mostre')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5.5-5.5L7 19"/></svg>
+        <span>Mostre</span>
+      </button>
+      <button class="tab-btn" data-tab="info" onclick="goTab('info')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.6" r="0.5" fill="currentColor"/></svg>
+        <span>Info</span>
+      </button>
+    </nav>
+
+  </div>
+<div id="detailOverlay" onclick="handleOverlayClick(event)">
+    <div id="detailPanel">
+
+      <div id="detailHero">
+        <button class="close-btn" onclick="closeDetail()" aria-label="Chiudi">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div class="hero-meta">
+          <span class="hero-cat" id="detailCat"></span>
+          <h2 class="hero-title" id="detailTitolo"></h2>
+          <div id="detailBadge"></div>
+        </div>
+      </div>
+
+      <div id="detailBody">
+        <div class="detail-addr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14">
+            <path d="M12 21s-7-7.2-7-12a7 7 0 1 1 14 0c0 4.8-7 12-7 12z"/>
+            <circle cx="12" cy="9" r="2"/>
+          </svg>
+          <span id="detailAddr"></span>
+        </div>
+        <div id="detailTesto"></div>
+        <div class="detail-cta">
+          <a class="cta-primary" id="btnIndicazioni" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
+            <span id="btnIndicazioniLabel">Indicazioni</span>
+          </a>
+          <a class="cta-secondary" id="btnSecondary" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            <span id="btnSecondaryLabel">Video</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="settingsOverlay" onclick="handleSettingsOverlayClick(event)">
+  <div id="settingsPanel">
+    <div class="settings-header">
+      <h2 id="settingsTitle">Impostazioni</h2>
+      <button class="close-btn" onclick="closeSettings()" aria-label="Chiudi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="settings-body">
+
+      <div class="settings-section">
+        <div class="settings-section-label" id="settingsLabelAppearance">Aspetto</div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <span class="settings-row-title" id="settingsLabelTheme">Tema</span>
+            <span class="settings-row-desc" id="settingsDescTheme">Scegli la modalità visiva dell'app</span>
+          </div>
+          <div class="settings-toggle-group" id="themeToggleGroup">
+            <button class="stoggle-btn active" data-theme="light" onclick="setTheme('light')">☀️</button>
+            <button class="stoggle-btn" data-theme="dark" onclick="setTheme('dark')">🌙</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-label" id="settingsLabelMap">Mappa</div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <span class="settings-row-title" id="settingsLabelMapStyle">Stile mappa</span>
+            <span class="settings-row-desc" id="settingsDescMapStyle">Cambia il rendering della mappa</span>
+          </div>
+          <div class="settings-toggle-group" id="mapStyleToggleGroup">
+            <button class="stoggle-btn active" data-mapstyle="streets" onclick="setMapStyle('streets')" id="mapStyleStreets">Classico</button>
+            <button class="stoggle-btn" data-mapstyle="satellite" onclick="setMapStyle('satellite')" id="mapStyleSatellite">Satellite</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-label" id="settingsLabelLegal">Note legali</div>
+        <button class="settings-row settings-row-clickable" onclick="openLegalFromSettings('privacy')" id="settingsLegalBtn">
+          <div class="settings-row-info">
+            <span class="settings-row-title" id="settingsLabelLegalBtn">Privacy, cookie e termini d'uso</span>
+            <span class="settings-row-desc" id="settingsDescLegalBtn">Leggi l'informativa completa</span>
+          </div>
+          <div class="settings-legal-arrow-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </button>
+      </div>
+
+
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
