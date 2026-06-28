@@ -1128,6 +1128,10 @@ function initMap() {
   markersLayer = L.layerGroup().addTo(map);
   drawMarkers();
   fitToMarkers();
+  map.on("zoomend", updatePinLabels);
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("portrait").catch(() => {});
+  }
 }
 
 function fitToMarkers() {
@@ -1162,6 +1166,16 @@ function drawMarkers() {
         .addTo(markersLayer).on("click", () => openDetail(it.id, "arte"));
     });
   }
+  updatePinLabels();
+}
+
+function updatePinLabels() {
+  if (!map) return;
+  const zoom = map.getZoom();
+  const show = zoom >= 16;
+  document.querySelectorAll(".pin").forEach(pin => {
+    pin.classList.toggle("label-visible", show);
+  });
 }
 
 function toggleFiltro(cat) {
@@ -1416,80 +1430,78 @@ function handleOverlayClick(e) {
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
 
 (function initSheetDrag() {
-  const sheet   = document.getElementById("mapSheet");
-  const handle  = document.getElementById("sheetHandle");
+  const sheet  = document.getElementById("mapSheet");
+  const handle = document.getElementById("sheetHandle");
   if (!sheet || !handle) return;
 
   let isCollapsed = false;
   let startY = 0;
-  let startTop = 0;
+  let sheetStartTop = 0;
   let dragging = false;
-  const COLLAPSED_TOP = "calc(100% - 23.5px)";
 
-  function collapse() {
-    isCollapsed = true;
-    sheet.style.transition = "top 0.32s cubic-bezier(0.25,0.46,0.45,0.94)";
-    sheet.style.top = COLLAPSED_TOP;
-    sheet.classList.add("collapsed");
+  function isDesktop() { return window.innerWidth >= 768; }
+  function tabbarH()   { return document.querySelector(".tabbar")?.offsetHeight || 0; }
+
+  function containerH() {
+    if (isDesktop()) return sheet.parentElement.getBoundingClientRect().height;
+    return window.innerHeight;
   }
 
-  function expand() {
-    isCollapsed = false;
-    sheet.style.transition = "top 0.32s cubic-bezier(0.25,0.46,0.45,0.94)";
-    sheet.style.top = "";
-    sheet.classList.remove("collapsed");
+  function topOffset() {
+    if (isDesktop()) return 0;
+    return 0;
   }
 
-  handle.addEventListener("click", () => {
-    if (isCollapsed) expand(); else collapse();
-  });
+  function openedTop()    { return containerH() - tabbarH() - 222; }
+  function collapsedTop() { return containerH() - tabbarH() - 40; }
 
-  handle.addEventListener("touchstart", e => {
-    startY = e.touches[0].clientY;
-    startTop = sheet.getBoundingClientRect().top;
-    dragging = true;
+  function getSheetTop() {
+    if (isDesktop()) {
+      return sheet.getBoundingClientRect().top - sheet.parentElement.getBoundingClientRect().top;
+    }
+    return sheet.getBoundingClientRect().top;
+  }
+
+  function snapTo(collapse) {
+    isCollapsed = collapse;
+    sheet.style.transition = "top 0.3s cubic-bezier(0.25,0.46,0.45,0.94)";
+    sheet.classList.toggle("collapsed", collapse);
+    sheet.style.top = (collapse ? collapsedTop() : openedTop()) + "px";
+    sheet.style.bottom = isDesktop() ? "0" : tabbarH() + "px";
+  }
+
+  function onDragStart(y) {
     sheet.style.transition = "none";
-  }, { passive: true });
+    sheetStartTop = getSheetTop();
+    startY = y;
+    dragging = true;
+  }
 
-  handle.addEventListener("touchmove", e => {
+  function onDragMove(y) {
     if (!dragging) return;
-    const dy = e.touches[0].clientY - startY;
-    const parentH = sheet.parentElement.getBoundingClientRect().height;
-    const newTop = Math.max(0, Math.min(startTop + dy, parentH - 44));
-    sheet.style.top = newTop + "px";
-  }, { passive: true });
+    const newTop = sheetStartTop + (y - startY);
+    sheet.style.top = Math.max(openedTop(), Math.min(newTop, collapsedTop())) + "px";
+  }
 
-  handle.addEventListener("touchend", () => {
+  function onDragEnd() {
     if (!dragging) return;
     dragging = false;
-    const parentH = sheet.parentElement.getBoundingClientRect().height;
-    const currentTop = sheet.getBoundingClientRect().top - sheet.parentElement.getBoundingClientRect().top;
-    if (currentTop > parentH * 0.6) { collapse(); } else { expand(); }
-  });
+    const currentTop = getSheetTop();
+    const mid = (openedTop() + collapsedTop()) / 2;
+    snapTo(currentTop > mid);
+  }
 
-  handle.addEventListener("mousedown", e => {
-    startY = e.clientY;
-    startTop = sheet.getBoundingClientRect().top;
-    dragging = true;
-    sheet.style.transition = "none";
-    e.preventDefault();
-  });
+  handle.addEventListener("click",      () => snapTo(!isCollapsed));
+  handle.addEventListener("touchstart", e  => onDragStart(e.touches[0].clientY), { passive: true });
+  handle.addEventListener("touchmove",  e  => onDragMove(e.touches[0].clientY),  { passive: true });
+  handle.addEventListener("touchend",   ()  => onDragEnd());
+  handle.addEventListener("mousedown",  e  => { onDragStart(e.clientY); e.preventDefault(); });
+  document.addEventListener("mousemove", e => { if (dragging) onDragMove(e.clientY); });
+  document.addEventListener("mouseup",   () => { if (dragging) onDragEnd(); });
 
-  document.addEventListener("mousemove", e => {
-    if (!dragging) return;
-    const dy = e.clientY - startY;
-    const parentH = sheet.parentElement.getBoundingClientRect().height;
-    const newTop = Math.max(0, Math.min(startTop + dy, parentH - 44));
-    sheet.style.top = newTop + "px";
-  });
+  window.addEventListener("resize", () => snapTo(isCollapsed));
 
-  document.addEventListener("mouseup", () => {
-    if (!dragging) return;
-    dragging = false;
-    const parentH = sheet.parentElement.getBoundingClientRect().height;
-    const currentTop = sheet.getBoundingClientRect().top - sheet.parentElement.getBoundingClientRect().top;
-    if (currentTop > parentH * 0.6) { collapse(); } else { expand(); }
-  });
+  requestAnimationFrame(() => snapTo(false));
 })();
 
 renderListaLuoghi();
